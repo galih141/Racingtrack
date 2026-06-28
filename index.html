@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Race Map Prompt Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Inline&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #181818;
+  --surface2: #222;
+  --border: #2e2e2e;
+  --accent: #f7e93e;
+  --accent2: #ff4d1c;
+  --text: #f0f0f0;
+  --muted: #666;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  padding: 48px 20px 80px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.012) 40px,
+    rgba(255,255,255,0.012) 41px
+  ),
+  repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 40px,
+    rgba(255,255,255,0.012) 40px,
+    rgba(255,255,255,0.012) 41px
+  );
+}
+
+/* HEADER */
+header {
+  max-width: 860px;
+  margin: 0 auto 52px;
+  text-align: center;
+}
+
+.flag-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.flag {
+  width: 32px; height: 32px;
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  grid-template-rows: repeat(4,1fr);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.flag div { background: #fff; }
+.flag div:nth-child(even) { background: #000; }
+.flag div:nth-child(4n+1):nth-child(odd),
+.flag div:nth-child(4n+3):nth-child(even) { background: #000; }
+
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+h1 {
+  font-family: 'Bungee Inline', sans-serif;
+  font-size: clamp(36px, 7vw, 76px);
+  line-height: 0.95;
+  letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+h1 span { color: var(--accent); -webkit-text-stroke: 1px var(--accent); }
+
+header p {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* MAIN */
+.container { max-width: 860px; margin: 0 auto; }
+
+/* SECTION */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 16px;
+}
+
+.section-label {
+  font-family: 'Bungee', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* TRACK TITLE */
+.track-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  color: var(--text);
+  font-family: 'Bungee', sans-serif;
+  font-size: 18px;
+  letter-spacing: 1px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.track-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(247,233,62,0.1);
+}
+
+.track-input::placeholder { color: var(--muted); }
+
+/* PRESET BUTTONS */
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.preset-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.preset-btn:hover, .preset-btn.active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* PROPS SECTION */
+.props-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.prop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.prop-item:hover { border-color: #555; }
+
+.prop-item.selected {
+  border-color: var(--accent);
+  background: rgba(247,233,62,0.07);
+}
+
+.prop-check {
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+
+.prop-item.selected .prop-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.prop-label { font-size: 13px; color: #ccc; }
+.prop-item.selected .prop-label { color: var(--accent); font-weight: 500; }
+
+/* CUSTOM INPUT */
+.custom-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.custom-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.custom-input:focus { border-color: var(--accent); }
+.custom-input::placeholder { color: var(--muted); }
+
+.add-btn {
+  background: var(--accent2);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+}
+
+.add-btn:hover { opacity: 0.85; }
+
+.custom-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.custom-tag {
+  background: rgba(255,77,28,0.15);
+  border: 1px solid rgba(255,77,28,0.3);
+  border-radius: 999px;
+  padding: 4px 12px 4px 14px;
+  font-size: 12px;
+  color: #ff7a5a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.custom-tag button {
+  background: none;
+  border: none;
+  color: #ff7a5a;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+/* OPTIONS */
+.options-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.option-group label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.option-group select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  transition: border-color 0.2s;
+}
+
+.option-group select:focus { border-color: var(--accent); }
+.option-group select option { background: var(--surface2); }
+
+/* GENERATE BTN */
+.gen-btn {
+  width: 100%;
+  padding: 18px;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Bungee', sans-serif;
+  font-size: 18px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  margin-top: 16px;
+}
+
+.gen-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(247,233,62,0.25);
+}
+
+/* OUTPUT */
+#output { display: none; }
+#output.visible { display: block; animation: fadeUp 0.4s ease; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.output-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-top: 16px;
+  position: relative;
+}
+
+.output-label {
+  font-family: 'Bungee', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.prompt-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #d0d0d0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.copy-btn {
+  margin-top: 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.copy-btn.copied {
+  background: rgba(247,233,62,0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="flag-row">
+    <div class="flag">
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <span class="eyebrow">Midjourney · Racing Game</span>
+    <div class="flag">
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+    </div>
+  </div>
+  <h1>Race Map<br><span>Prompt Gen</span></h1>
+  <p>Build your racing map prompt for Midjourney in seconds</p>
+</header>
+
+<div class="container">
+
+  <!-- TRACK NAME -->
+  <div class="section">
+    <div class="section-label">🏁 Track Name</div>
+    <input class="track-input" id="trackName" type="text" placeholder="COFFEE SHOP" oninput="syncPreset()">
+    <div class="preset-row" id="presetRow">
+      <!-- CITY -->
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;margin-bottom:6px;font-weight:600">🌆 City & Urban</div>
+      <button class="preset-btn" onclick="setTrack('New York Street')">🗽 New York Street</button>
+      <button class="preset-btn" onclick="setTrack('Tokyo Crossing')">🗼 Tokyo Crossing</button>
+      <button class="preset-btn" onclick="setTrack('Chinese Old Town')">🏮 Chinese Old Town</button>
+      <button class="preset-btn" onclick="setTrack('Korean Alley')">🇰🇷 Korean Alley</button>
+      <button class="preset-btn" onclick="setTrack('London Street')">🎡 London Street</button>
+      <button class="preset-btn" onclick="setTrack('Rooftop City View')">🏙️ Rooftop City View</button>
+      <button class="preset-btn" onclick="setTrack('Subway Station')">🚇 Subway Station</button>
+      <button class="preset-btn" onclick="setTrack('Bus Stop')">🚌 Bus Stop</button>
+      <button class="preset-btn" onclick="setTrack('Night Market')">🌃 Night Market</button>
+      <button class="preset-btn" onclick="setTrack('Shopping Mall')">🛍️ Shopping Mall</button>
+      <button class="preset-btn" onclick="setTrack('Rainy City Street')">🌧️ Rainy City Street</button>
+      <!-- FANTASY -->
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:12px;margin-bottom:6px;font-weight:600;width:100%">🧙 Fantasy & Adventure</div>
+      <button class="preset-btn" onclick="setTrack('Medieval Village')">⚔️ Medieval Village</button>
+      <button class="preset-btn" onclick="setTrack('Castle Courtyard')">🏰 Castle Courtyard</button>
+      <button class="preset-btn" onclick="setTrack('Pirate Harbor')">🏴‍☠️ Pirate Harbor</button>
+      <button class="preset-btn" onclick="setTrack('Dragon Cave')">🐉 Dragon Cave</button>
+      <button class="preset-btn" onclick="setTrack('Wizard Library')">🔮 Wizard Library</button>
+      <button class="preset-btn" onclick="setTrack('Fairy Forest')">🧚 Fairy Forest</button>
+      <button class="preset-btn" onclick="setTrack('Floating Island')">🏝️ Floating Island</button>
+      <button class="preset-btn" onclick="setTrack('Ancient Ruins')">🗿 Ancient Ruins</button>
+      <button class="preset-btn" onclick="setTrack('Crystal Cave')">💎 Crystal Cave</button>
+      <button class="preset-btn" onclick="setTrack('Magic Academy')">✨ Magic Academy</button>
+      <!-- COZY -->
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:12px;margin-bottom:6px;font-weight:600;width:100%">🏡 Cozy & Indoor</div>
+      <button class="preset-btn" onclick="setTrack('Coffee Shop')">☕ Coffee Shop</button>
+      <button class="preset-btn" onclick="setTrack('Kitchen')">🍳 Kitchen</button>
+      <button class="preset-btn" onclick="setTrack('Bedroom')">🛏️ Bedroom</button>
+      <button class="preset-btn" onclick="setTrack('Bathroom')">🛁 Bathroom</button>
+      <button class="preset-btn" onclick="setTrack('Living Room')">🛋️ Living Room</button>
+      <button class="preset-btn" onclick="setTrack('Home Office')">💼 Home Office</button>
+      <button class="preset-btn" onclick="setTrack('Library')">📚 Library</button>
+      <button class="preset-btn" onclick="setTrack('Classroom')">🎓 Classroom</button>
+      <button class="preset-btn" onclick="setTrack('Bakery')">🥐 Bakery</button>
+      <button class="preset-btn" onclick="setTrack('Restaurant')">🍽️ Restaurant</button>
+      <button class="preset-btn" onclick="setTrack('Art Studio')">🎨 Art Studio</button>
+      <button class="preset-btn" onclick="setTrack('Gym')">🏋️ Gym</button>
+      <button class="preset-btn" onclick="setTrack('Barbershop')">💈 Barbershop</button>
+      <button class="preset-btn" onclick="setTrack('Cottage Garden')">🌸 Cottage Garden</button>
+      <button class="preset-btn" onclick="setTrack('Reading Nook')">📖 Reading Nook</button>
+      <button class="preset-btn" onclick="setTrack('Greenhouse')">🪴 Greenhouse</button>
+      <button class="preset-btn" onclick="setTrack('Fireplace Room')">🔥 Fireplace Room</button>
+      <button class="preset-btn" onclick="setTrack('Sunroom')">☀️ Sunroom</button>
+      <button class="preset-btn" onclick="setTrack('Rustic Farmhouse')">🏚️ Rustic Farmhouse</button>
+      <button class="preset-btn" onclick="setTrack('Balcony Café')">🌿 Balcony Café</button>
+      <button class="preset-btn" onclick="setTrack('Tiny House Interior')">🏠 Tiny House</button>
+      <button class="preset-btn" onclick="setTrack('Vintage Bookstore')">📚 Vintage Bookstore</button>
+      <!-- SEASONAL -->
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:12px;margin-bottom:6px;font-weight:600;width:100%">🍂 Seasonal & Weather</div>
+      <button class="preset-btn" onclick="setTrack('Autumn Park')">🍁 Autumn Park</button>
+      <button class="preset-btn" onclick="setTrack('Cherry Blossom Avenue')">🌸 Cherry Blossom</button>
+      <button class="preset-btn" onclick="setTrack('Christmas Village')">🎄 Christmas Village</button>
+      <button class="preset-btn" onclick="setTrack('Halloween Street')">🎃 Halloween Street</button>
+      <button class="preset-btn" onclick="setTrack('Spring Meadow')">🌼 Spring Meadow</button>
+      <button class="preset-btn" onclick="setTrack('Summer Beach Resort')">🏖️ Summer Beach Resort</button>
+      <button class="preset-btn" onclick="setTrack('Winter Cabin')">❄️ Winter Cabin</button>
+      <button class="preset-btn" onclick="setTrack('Harvest Farm')">🌾 Harvest Farm</button>
+      <button class="preset-btn" onclick="setTrack('Snow-Covered Town')">🌨️ Snow Town</button>
+      <!-- NATURE -->
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:12px;margin-bottom:6px;font-weight:600;width:100%">🌿 Nature & Outdoors</div>
+      <button class="preset-btn" onclick="setTrack('Forest')">🌲 Forest</button>
+      <button class="preset-btn" onclick="setTrack('Hills')">⛰️ Hills</button>
+      <button class="preset-btn" onclick="setTrack('Mountain Peak')">🏔️ Mountain Peak</button>
+      <button class="preset-btn" onclick="setTrack('Beach')">🏖️ Beach</button>
+      <button class="preset-btn" onclick="setTrack('Waterfall')">💧 Waterfall</button>
+      <button class="preset-btn" onclick="setTrack('Desert')">🏜️ Desert</button>
+      <button class="preset-btn" onclick="setTrack('Flower Garden')">🌺 Flower Garden</button>
+      <button class="preset-btn" onclick="setTrack('Tropical Jungle')">🌴 Tropical Jungle</button>
+      <button class="preset-btn" onclick="setTrack('Lake Shore')">🏞️ Lake Shore</button>
+      <button class="preset-btn" onclick="setTrack('Snowy Forest')">🌨️ Snowy Forest</button>
+      <button class="preset-btn" onclick="setTrack('Cliff')">🏔️ Cliff</button>
+      <button class="preset-btn" onclick="setTrack('Garden')">🌿 Garden</button>
+      <button class="preset-btn" onclick="setTrack('Camping Site')">⛺ Camping Site</button>
+    </div>
+  </div>
+
+  <!-- PROPS -->
+  <div class="section">
+    <div class="section-label">🚧 Track Props & Obstacles</div>
+    <div class="props-grid" id="propsGrid"></div>
+    <!-- CUSTOM -->
+    <div class="section-label" style="margin-top:16px">✏️ Other (Custom Props)</div>
+    <div class="custom-row">
+      <input class="custom-input" id="customPropInput" type="text" placeholder="Type your own prop e.g. giant donut">
+      <button class="add-btn" onclick="addCustomProp()">+ Add</button>
+    </div>
+    <div class="custom-tags" id="customTags"></div>
+  </div>
+
+  <!-- HAZARDS -->
+  <div class="section">
+    <div class="section-label">⚠️ Track Hazards</div>
+    <div class="props-grid" id="hazardsGrid"></div>
+    <div class="section-label" style="margin-top:16px">✏️ Other (Custom Hazards)</div>
+    <div class="custom-row">
+      <input class="custom-input" id="customHazardInput" type="text" placeholder="Type your own hazard e.g. spilled paint">
+      <button class="add-btn" onclick="addCustomHazard()">+ Add</button>
+    </div>
+    <div class="custom-tags" id="customHazardTags"></div>
+  </div>
+
+  <!-- OPTIONS -->
+  <div class="section">
+    <div class="section-label">⚙️ Render Options</div>
+    <div class="options-row">
+      <div class="option-group">
+        <label>Camera Layout</label>
+        <select id="layout">
+          <option value="4 panel grid 2x2 layout, each panel different camera angle">4 Panel Grid (2x2)</option>
+          <option value="single panel rear chase camera angle">Single Shot — Rear Chase</option>
+          <option value="single panel low ground level angle">Single Shot — Ground Level</option>
+          <option value="single panel wide aerial establishing shot">Single Shot — Aerial</option>
+          <option value="3 panel horizontal strip, each different angle">3 Panel Strip</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>Art Style</label>
+        <select id="artstyle">
+          <option value="vivid saturated arcade racing game visuals, fun colorful toy car racing game aesthetic">Arcade / Cartoon</option>
+          <option value="realistic game engine visuals, high detail environment, cinematic lighting">Realistic / Cinematic</option>
+          <option value="low poly stylized game art, flat colors, clean edges">Low Poly Stylized</option>
+          <option value="retro 90s racing game pixel inspired style, colorful">Retro 90s</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>Lighting</label>
+        <select id="lighting">
+          <option value="bright warm indoor lighting">Warm Indoor</option>
+          <option value="soft natural daylight">Natural Daylight</option>
+          <option value="dramatic sunset golden hour lighting">Sunset Golden Hour</option>
+          <option value="cool fluorescent lighting">Cool Fluorescent</option>
+          <option value="moody dramatic night lighting with neon accents">Moody Night + Neon</option>
+          <option value="bright overcast outdoor lighting">Overcast Outdoor</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>Aspect Ratio</label>
+        <select id="ratio">
+          <option value="--ar 16:9">16:9 (Widescreen)</option>
+          <option value="--ar 1:1">1:1 (Square)</option>
+          <option value="--ar 4:5">4:5 (Portrait)</option>
+          <option value="--ar 9:16">9:16 (Vertical)</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>MJ Version</label>
+        <select id="mjver">
+          <option value="--v 6 --style raw">v6 Raw</option>
+          <option value="--v 6">v6</option>
+          <option value="--v 5.2">v5.2</option>
+          <option value="--niji 6">Niji 6 (Anime)</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>Extra Flags</label>
+        <select id="quality">
+          <option value="--q 2">Quality 2 (Best)</option>
+          <option value="--q 1">Quality 1 (Fast)</option>
+          <option value="">No Extra Flags</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <button class="gen-btn" onclick="generatePrompt()">🏁 GENERATE PROMPT</button>
+
+  <!-- OUTPUT -->
+  <div id="output">
+    <div class="output-box">
+      <div class="output-label">YOUR PROMPT — COPY & PASTE INTO MIDJOURNEY</div>
+      <div class="prompt-text" id="promptText"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">📋 Copy Prompt</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════
+// DATA
+// ═══════════════════════════
+
+const TRACK_PROPS = {
+  'Coffee Shop': ['giant coffee cups','tall latte glasses','french press','sugar dispenser','stacked saucer plates as ramps','croissant corners','muffin barriers','menu board','wooden table surface','marble cafe counter','chair legs','table legs'],
+  'Kitchen': ['giant cereal boxes','milk cartons','massive coffee mug','oversized cutting board ramps','butter knife','ketchup bottle','salt and pepper shakers','frying pan','wooden spoon','toaster','colander','pot lid'],
+  'Bedroom': ['stacked books as ramps','alarm clock','rolled socks','pillow corners','bed frame legs','lamp base','charging cable','shoe boxes','stuffed animals','wardrobe doors'],
+  'Bathroom': ['giant soap bars','toothbrush ramps','shampoo bottle barriers','toilet paper roll','towel rack','rubber duck','toothpaste tube','comb','hair dryer','mirror frame'],
+  'Cliff': ['giant boulders','fallen tree trunks','loose rocks','cliff edge barriers','dead tree stumps','mountain sign','rope bridge','stone arch','rock wall','gravel patches'],
+  'Garden': ['giant flower pots','watering can','garden hose','rake handle','sunflower stems','lawn mower','garden gnome','stone stepping paths','leaf piles','wheelbarrow'],
+  'Office Desk': ['keyboard ramps','pencil barriers','stapler','coffee mug','notebook stack','monitor base','mouse pad','sticky note piles','ruler','tape dispenser'],
+  'Home Office': ['keyboard ramps','pencil barriers','stapler','coffee mug','notebook stack','monitor base','mouse pad','sticky note piles','ruler','tape dispenser'],
+  'Rooftop': ['AC unit obstacles','satellite dish','water tower','brick chimney','antenna pole','skylight windows','ventilation pipes','solar panels','drainage pipes'],
+  'Rooftop City View': ['AC unit obstacles','satellite dish','water tower','brick chimney','antenna pole','skylight windows','ventilation pipes','solar panels','city skyline backdrop'],
+  'Beach': ['beach umbrella poles','sandcastle towers','coconut','surfboard ramps','deck chair','beach towel','cooler box','volleyball net post','driftwood logs'],
+  'Library': ['stacked book towers','bookshelf ends','globe','reading lamp','rolling ladder','card catalog','magazine rack','wooden desk','hourglass'],
+  'Supermarket': ['shopping cart','cereal boxes','soda can towers','shopping basket','price tag signs','freezer doors','shopping bag','fruit display','checkout counter'],
+  'Gym': ['dumbbell weights','barbell ramps','yoga mat rolls','resistance bands','treadmill','water bottle','gym bag','jump rope','foam roller','weight plates'],
+  'New York Street': ['yellow taxi cabs','fire hydrants','hot dog cart','newspaper stand','street lamp posts','trash cans','manhole covers','concrete barriers','scaffolding poles','broadway signs'],
+  'Tokyo Crossing': ['giant vending machines','neon sign towers','traffic light poles','pedestrian crossing lines','convenience store facade','capsule machine','bento box stack','cherry blossom trees','torii gate','anime billboard'],
+  'Chinese Old Town': ['red lantern poles','stone lion statues','tea house facade','drum tower','incense burner','bamboo scaffolding','fortune cookie stack','moon gate arch','paper umbrella','lucky cat statue'],
+  'Korean Alley': ['tteokbokki cart','pojangmacha tent','lantern strings','hanok roof corners','kimchi jar stacks','streetfood stall','neon signs','phone booth','stone steps','flower pots on wall'],
+  'London Street': ['red telephone box','double decker bus','black cab taxi','pub facade','big ben miniature','iron lamppost','cobblestone surface','royal mail postbox','newspaper stand','london bridge arch'],
+  'Subway Station': ['train cars','platform edge barriers','turnstile gates','support pillars','hanging straps','subway map board','bench rows','vending machine','ticket booth','electric rail tracks'],
+  'Bus Stop': ['bus stop shelter','bench','route map board','trash bin','bicycle rack','streetlight','potted plant','advertisement billboard','sidewalk tiles','rain puddles'],
+  'Night Market': ['food stall awnings','lantern strings','BBQ grill cart','souvenir stand','neon lights','umbrella tables','bamboo fence','steaming pot','fairy lights','wooden sign posts'],
+  'Shopping Mall': ['escalator rails','fountain centerpiece','shop window displays','potted palm trees','bench seating','mannequin display','food court tables','elevator doors','directory sign','balloon decorations'],
+  'Rainy City Street': ['rain puddles reflecting neon','wet cobblestones','umbrella stands','streetlamp halos','bus shelter','overflowing drain','rain-soaked awning','taxi splash','misty alley','reflective wet road'],
+  'Medieval Village': ['wooden market stalls','hay bales','horse cart','well structure','wooden fence posts','tavern facade','blacksmith anvil','stone wall barriers','wooden barrels','torch posts'],
+  'Castle Courtyard': ['stone pillar bases','wooden drawbridge planks','armory racks','catapult','shield wall','knight statue','torch sconces','cobblestone ground','iron gate doors','banner poles'],
+  'Pirate Harbor': ['anchor','ship wheel','barrel stacks','dock planks','fishing net','ship mast pole','treasure chest','rope coils','lighthouse','cannon'],
+  'Dragon Cave': ['stalagmite spikes','crystal formations','dragon egg clusters','lava pool edges','bone piles','glowing mushrooms','cave wall cracks','torch holders','skull barriers','gem deposits'],
+  'Wizard Library': ['floating spell books','potion bottle shelves','crystal ball stand','telescope','scroll piles','magic wand holder','candelabra','hourglass','rune stone tablet','enchanted bookshelf'],
+  'Fairy Forest': ['giant mushroom caps','flower arch gates','glowing fireflies','tree root ramps','moss-covered logs','fairy door houses','dewdrop ponds','vine curtains','acorn obstacles','butterfly perches'],
+  'Floating Island': ['cloud platform edges','rope bridge connectors','wind turbine','sky lanterns','waterfall edges','floating rock pillars','rainbow arc','sky flower clusters','bird nest','aerial lighthouse'],
+  'Ancient Ruins': ['broken column bases','crumbling stone walls','overgrown vines','hieroglyph slabs','stone altar','buried treasure','snake statue','cracked floor tiles','fallen arch','torch sconces'],
+  'Crystal Cave': ['crystal spike formations','glowing gem pillars','ice stalactites','reflective crystal floor','prism light beams','mineral deposit clusters','cave pool edges','crystal arch gate','quartz boulders','shimmer rock walls'],
+  'Magic Academy': ['spellbook stacks','potion cauldron','magic portal gate','wand display','star map ceiling','enchanted door','class desk rows','crystal orb stand','floating candles','rune circle floor'],
+  'Cottage Garden': ['flower bed borders','watering can','garden arch with roses','stone path','bird bath','hedge maze walls','picket fence','lavender rows','bee hive','wooden garden bench'],
+  'Reading Nook': ['book stack towers','reading lamp','cozy armchair legs','window sill','tea tray','throw blanket pile','bookshelf ends','potted plant','cat sleeping spot','cushion pile'],
+  'Greenhouse': ['plant pot rows','watering hose','potting bench','seedling trays','hanging baskets','glass wall panels','fertilizer bags','trowel tools','plant label sticks','irrigation pipes'],
+  'Fireplace Room': ['fireplace mantel','log pile','armchair bases','rug edges','candle holders','bookshelf legs','holiday stocking','coffee table','popcorn bowl','cozy blanket pile'],
+  'Sunroom': ['plant pot clusters','rattan chair legs','window frame pillars','hanging plant baskets','watering can','garden stool','sun umbrella','tea set tray','wind chime','light curtain drapes'],
+  'Rustic Farmhouse': ['wooden barrel stacks','hay bale corners','milk churn','lantern post','farm gate','pitchfork stand','tractor wheel','chicken coop','feed sack pile','old wooden wagon'],
+  'Balcony Café': ['potted plant railing','bistro table legs','string fairy lights','menu chalkboard','coffee cup display','flower box','railing bars','umbrella pole','hanging lantern','city view backdrop'],
+  'Tiny House Interior': ['loft ladder','fold-out table','mini fridge','wall-mounted shelf','window seat','compact sofa','plant corner','under-stair storage','tiny desk','murphy bed frame'],
+  'Vintage Bookstore': ['floor-to-ceiling bookshelves','rolling book ladder','stacked rare book piles','antique desk','magnifying glass','vintage typewriter','globe stand','old map poster','reading chair','dust particles'],
+  'Living Room': ['sofa legs','coffee table','TV stand','bookshelf','rug edge','potted plant','side lamp','cushion pile','remote control','vase'],
+  'Classroom': ['desk rows','chalkboard','globe','bookbag pile','pencil holder','teacher desk','world map poster','chair legs','ruler stack','notebook piles'],
+  'Bakery': ['bread loaf shelves','display glass case','cake stand','rolling pin ramp','flour sack','oven door','mixing bowl','wooden tray','macaron tower','pastry rack'],
+  'Restaurant': ['dining table legs','wine bottle rack','plate stack','candle holder','menu board','bar stool','serving tray','chalkboard specials','flower vase','napkin holder'],
+  'Art Studio': ['easel stands','paint tube piles','canvas roll','paintbrush jar','palette board','sculpture base','paint spill','stool','reference photo board','ink bottle'],
+  'Barbershop': ['barber chair base','mirror frame','scissors holder','comb display','hair product bottles','striped pole','waiting bench','magazine stack','towel pile','clipper cord'],
+  'Autumn Park': ['fallen leaf piles','park bench','oak tree roots','acorn scatter','pumpkin display','wooden fence','lamp post','picnic blanket','wheelbarrow of leaves','bird feeder'],
+  'Cherry Blossom Avenue': ['cherry blossom tree trunks','fallen petal drifts','stone lanterns','wooden bridge','koi pond edge','bamboo fence','park bench','stone path','paper umbrella stand','blossom arch'],
+  'Christmas Village': ['decorated christmas tree','snowman','gift box stacks','candy cane poles','wreath door','lantern post','reindeer figure','snow pile','gingerbread house','elf workshop'],
+  'Halloween Street': ['jack-o-lanterns','tombstone barriers','spider web corners','ghost decoration','witch hat pile','hay bale','haunted house facade','skeleton figure','cauldron','bat swarm visual'],
+  'Spring Meadow': ['flower patch clusters','butterfly net','picnic basket','daisy field','bird nest','wooden gate','stream edge','kite string','ladybug on leaf','garden path'],
+  'Summer Beach Resort': ['beach umbrella poles','sun lounger','surfboard rack','palm tree trunks','coconut cart','inflatable ring','sandcastle','flip flop scatter','beach bar counter','beach volleyball net'],
+  'Winter Cabin': ['log pile','snow drift','lantern post','wooden sled','ice fishing hole','pine tree base','snow-covered roof edge','boot rack','wool blanket pile','fireplace corner'],
+  'Harvest Farm': ['pumpkin patch','corn maze walls','apple basket','scarecrow','hay bale stack','wooden wagon','sunflower row','wheelbarrow','pitchfork','farm gate'],
+  'Snow-Covered Town': ['snow drift barriers','frozen fountain','christmas lights pole','snowman','ice patch','shop window frost','snow-covered bench','icicle hang','footprint trail','pine tree with snow'],
+  'Forest': ['tree root ramps','log obstacles','mushroom clusters','fallen branch','moss rock','berry bush','stream crossing','pine cone scatter','hollow log tunnel','fern patch'],
+  'Hills': ['rolling hill slope','stone wall','sheep figure','wooden stile','wild grass patch','hedge row','farm track','wind turbine base','cloud shadow patch','hilltop cairn'],
+  'Mountain Peak': ['boulder obstacles','snow drift','mountain sign','rope anchor point','cliff ledge','ice patch','prayer flag pole','rocky path','summit cross','eagle nest'],
+  'Waterfall': ['water mist patch','slippery wet rock','waterfall ledge','mossy boulder','log bridge','fern overhang','splash pool edge','river stone scatter','fallen tree','cave entrance'],
+  'Desert': ['cactus cluster','sand dune ridge','tumbleweed','sun-bleached skull','camel figure','desert rock','heat shimmer','oasis pool edge','sand storm visual','ancient well'],
+  'Flower Garden': ['flower bed borders','rose arch','butterfly bush','stone path','birdbath','garden fence','lavender row','bee box','tulip cluster','garden statue'],
+  'Tropical Jungle': ['giant leaf canopy','vine rope hang','bamboo stalk','tropical flower','jungle bird perch','river log','quicksand patch','ancient temple stone','hanging moss','waterfall cascade'],
+  'Lake Shore': ['fishing dock planks','rowboat moored','reed patch','lake stone','wooden pier post','fishing rod stand','water lily','duck figure','mist over water','picnic table'],
+  'Snowy Forest': ['snow-laden pine','frozen stream','icicle spike','animal track print','log barrier','snow mound','frozen pond edge','owl perch','winter berry bush','snow fort'],
+  'Camping Site': ['tent structures','campfire ring','log bench','backpack pile','hanging lantern','tree stump','cooler box','hiking boots','map and compass','clothesline'],
+};
+
+const TRACK_HAZARDS = {
+  'Coffee Shop': ['spilled coffee puddles','coffee bean scatter','sugar spill','milk foam patch','crumbled cookie pieces','wet floor sign'],
+  'Kitchen': ['spilled flour sand trap','water puddle','oil slick','scattered vegetables','broken egg yolk','crumbs'],
+  'Bedroom': ['scattered coins','crumpled paper balls','dust bunny','fallen clothes pile','scattered lego bricks','tangled cables'],
+  'Bathroom': ['water puddle','soap foam slick','wet tiles','scattered cotton balls','toothpaste smear'],
+  'Cliff': ['loose gravel patch','mudslide','narrow ledge drop off','fallen rocks','fog patches'],
+  'Garden': ['mud puddle','ant hill','scattered seeds','fallen leaves','garden hose loop trap','sprinkler spray'],
+  'Office Desk': ['paper clip scatter','rubber band trap','sticky tape patch','pen roll hazard','crumbled paper balls'],
+  'Home Office': ['paper clip scatter','rubber band trap','sticky tape patch','pen roll hazard','crumbled paper balls'],
+  'Rooftop': ['puddle from rain','moss patches','loose gravel','bird dropping slick','windy gusts visual'],
+  'Rooftop City View': ['puddle from rain','moss patches','loose gravel','strong wind visual','slippery surface'],
+  'Beach': ['wet sand sink','seaweed tangle','crab holes','tide pool','sand dune bumps'],
+  'Library': ['scattered bookmarks','paperclip hazard','fallen page corners','dusty patches','ink spill'],
+  'Supermarket': ['spilled juice puddle','rolling apple hazard','broken egg','wet floor sign','scattered coins'],
+  'Gym': ['sweat puddle','scattered protein powder','resistance band trip','chalk dust','water bottle spill'],
+  'New York Street': ['rain puddle','spilled hot dog condiment','scattered newspaper','manhole steam','taxi door swing'],
+  'Tokyo Crossing': ['neon glare patch','wet crossing lines','dropped bento','umbrella obstacle','vending machine spill'],
+  'Chinese Old Town': ['firecracker debris','scattered tea leaves','wet lantern oil','incense ash patch','crumbled wall dust'],
+  'Korean Alley': ['spilled tteokbokki sauce','kimchi jar spill','wet alley puddle','fallen signboard','steam from grill'],
+  'London Street': ['rain puddle','slippery cobblestone','spilled tea','newspaper scatter','bus exhaust smoke'],
+  'Subway Station': ['wet platform puddle','dropped ticket scatter','electric sparks','spilled drink','gap in platform'],
+  'Bus Stop': ['rain puddle','slippery wet tile','fallen umbrella','spilled drink','muddy footprint trail'],
+  'Night Market': ['grease spill','charcoal smoke','sauce drip puddle','dropped skewer','wet ground patch'],
+  'Shopping Mall': ['spilled smoothie','dropped shopping bag','slippery floor sign','rolling coin','water fountain splash'],
+  'Rainy City Street': ['deep rain puddle','slick wet road','overflowing drain gutter','umbrella poke hazard','blinding headlight glare'],
+  'Medieval Village': ['horse dung patch','spilled barrel ale','muddy cart rut','scattered hay','broken crate debris'],
+  'Castle Courtyard': ['oil trap','arrow scatter','muddy puddle','loose cobblestone','chain drag'],
+  'Pirate Harbor': ['slippery wet dock','fish guts spill','rope tangle','tar pitch puddle','wave splash'],
+  'Dragon Cave': ['lava pool edge','toxic gas vent','bone fragment scatter','falling stalactite','glowing slime patch'],
+  'Wizard Library': ['magical ink spill','floating spell debris','potion splash','enchanted page tornado','glowing rune trap'],
+  'Fairy Forest': ['dew puddle','pollen cloud','slippery mushroom cap','sticky honey drop','firefly swarm'],
+  'Floating Island': ['cloud gap drop','wind gust push','slippery moss','loose floating rock','fog blind patch'],
+  'Ancient Ruins': ['sand trap','crumbling floor tile','snake pit edge','poison dart trigger','vine tangle'],
+  'Crystal Cave': ['ice slick patch','crystal shard scatter','blinding light reflection','frost breath cloud','unstable ground crack'],
+  'Magic Academy': ['spell misfire splash','potion explosion','ink spill','floating debris','enchanted floor trap'],
+  'Cottage Garden': ['muddy patch','garden hose loop','bee swarm','fallen flower pot','slippery wet stone'],
+  'Reading Nook': ['scattered bookmark','spilled tea','tumbling book stack','cat toy obstacle','blanket trip'],
+  'Greenhouse': ['water spray mist','soil spill','fallen pot shard','slippery wet floor','tangled hose'],
+  'Fireplace Room': ['ash scatter','knocked over candle wax','rug curl trip','popcorn spill','ember glow patch'],
+  'Sunroom': ['water spill from plant','slippery tile','fallen leaf scatter','tangled wind chime','bright glare patch'],
+  'Rustic Farmhouse': ['mud puddle','scattered chicken feed','hay pile','oil stain','loose floorboard'],
+  'Balcony Café': ['wind gust','spilled coffee drip','wet rain patch','slippery tile','fallen flower petal'],
+  'Tiny House Interior': ['narrow gap squeeze','tripping cord','spilled mug','folded furniture edge','slippery rug'],
+  'Vintage Bookstore': ['ink spill','dusty floor patch','fallen book avalanche','sticky old tape','tumbling stack'],
+  'Living Room': ['rug corner trip','remote control scatter','popcorn spill','tangled cable','wet plant soil'],
+  'Classroom': ['chalk dust cloud','scattered eraser','spilled paint','chair leg trip','rolling pencil'],
+  'Bakery': ['flour dust cloud','spilled batter','rolling pin roll','sugar spill','hot tray hazard'],
+  'Restaurant': ['spilled sauce','wine drip patch','slippery floor sign','rolling olive','napkin scatter'],
+  'Art Studio': ['paint spill puddle','scattered brush','solvent fumes visual','canvas roll trip','charcoal dust'],
+  'Barbershop': ['hair clipping pile','slippery floor wax','spilled product','tangled cord','fallen magazine'],
+  'Autumn Park': ['wet leaf slick','muddy patch','acorn roll','puddle splash','fallen branch'],
+  'Cherry Blossom Avenue': ['petal drift blind','wet stone bridge','puddle reflection','slippery moss','fallen branch'],
+  'Christmas Village': ['ice patch','snow drift bump','tangled lights','spilled hot cocoa','slippery snow'],
+  'Halloween Street': ['fog patch','slippery wet leaves','scattered candy','cobweb tangle','pumpkin roll'],
+  'Spring Meadow': ['mud patch','pollen cloud','wet grass slick','puddle','scattered seeds'],
+  'Summer Beach Resort': ['wet sand sink','seaweed slip','sunscreen spill','loose sand drift','tide rush'],
+  'Winter Cabin': ['ice patch','snow drift','spilled hot cocoa','frozen puddle','snowy boot print'],
+  'Harvest Farm': ['mud rut','pumpkin roll','scattered seeds','wet hay slip','animal footprint mud'],
+  'Snow-Covered Town': ['black ice patch','snowdrift bump','icicle drop','slush puddle','frozen puddle'],
+  'Forest': ['mud puddle','root trip','fallen branch','leaf pile sink','slippery moss rock'],
+  'Hills': ['muddy slope','loose stone','rabbit hole','wet grass slip','cowpat hazard'],
+  'Mountain Peak': ['ice patch','loose scree','snow drift','altitude wind gust','fog blind'],
+  'Waterfall': ['mist slick','wet rock','rushing water edge','slippery algae','splash zone'],
+  'Desert': ['quicksand patch','heat shimmer mirage','sand storm visual','loose sand drift','scorpion hole'],
+  'Flower Garden': ['mud patch','bee swarm','pollen cloud','wet stone','fallen petal slick'],
+  'Tropical Jungle': ['quicksand patch','vine tangle','slippery wet leaf','hidden pit','river crossing'],
+  'Lake Shore': ['wet mud edge','slippery dock plank','submerged rock','wave splash','seaweed tangle'],
+  'Snowy Forest': ['ice patch','snow drift','frozen stream crossing','icicle drop','deep snow sink'],
+  'Camping Site': ['tent peg trip','campfire ash scatter','wet muddy patch','tree root','spilled camp food'],
+};
+
+const DEFAULT_PROPS = ['giant obstacle A','giant obstacle B','ramp structure','corner barrier','background prop'];
+const DEFAULT_HAZARDS = ['liquid spill puddle','scattered small items','slippery patch'];
+
+let customProps = [];
+let customHazards = [];
+let selectedProps = new Set();
+let selectedHazards = new Set();
+
+// ═══════════════════════════
+// INIT
+// ═══════════════════════════
+
+function init() {
+  renderPropsGrid('Coffee Shop');
+  document.getElementById('trackName').value = 'Coffee Shop';
+  setActivePreset('Coffee Shop');
+}
+
+function renderPropsGrid(track) {
+  selectedProps.clear();
+  selectedHazards.clear();
+  const props = TRACK_PROPS[track] || DEFAULT_PROPS;
+  const hazards = TRACK_HAZARDS[track] || DEFAULT_HAZARDS;
+
+  // auto select first 6 props
+  props.slice(0, 6).forEach(p => selectedProps.add(p));
+  hazards.slice(0, 3).forEach(h => selectedHazards.add(h));
+
+  buildGrid('propsGrid', props, selectedProps, 'prop');
+  buildGrid('hazardsGrid', hazards, selectedHazards, 'hazard');
+}
+
+function buildGrid(containerId, items, selectedSet, type) {
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = '';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'prop-item' + (selectedSet.has(item) ? ' selected' : '');
+    div.innerHTML = `<div class="prop-check">${selectedSet.has(item) ? '✓' : ''}</div><span class="prop-label">${item}</span>`;
+    div.onclick = () => toggleItem(div, item, selectedSet);
+    grid.appendChild(div);
+  });
+}
+
+function toggleItem(el, item, set) {
+  if (set.has(item)) {
+    set.delete(item);
+    el.classList.remove('selected');
+    el.querySelector('.prop-check').textContent = '';
+  } else {
+    set.add(item);
+    el.classList.add('selected');
+    el.querySelector('.prop-check').textContent = '✓';
+  }
+}
+
+// ═══════════════════════════
+// TRACK PRESET
+// ═══════════════════════════
+
+function setTrack(name) {
+  document.getElementById('trackName').value = name;
+  setActivePreset(name);
+  renderPropsGrid(name);
+  customProps = [];
+  customHazards = [];
+  document.getElementById('customTags').innerHTML = '';
+  document.getElementById('customHazardTags').innerHTML = '';
+}
+
+function setActivePreset(name) {
+  document.querySelectorAll('.preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim().includes(name));
+  });
+}
+
+function syncPreset() {
+  const val = document.getElementById('trackName').value;
+  setActivePreset(val);
+  if (TRACK_PROPS[val]) renderPropsGrid(val);
+}
+
+// ═══════════════════════════
+// CUSTOM PROPS
+// ═══════════════════════════
+
+function addCustomProp() {
+  const input = document.getElementById('customPropInput');
+  const val = input.value.trim();
+  if (!val) return;
+  customProps.push(val);
+  renderCustomTags('customTags', customProps, 'prop');
+  input.value = '';
+}
+
+function addCustomHazard() {
+  const input = document.getElementById('customHazardInput');
+  const val = input.value.trim();
+  if (!val) return;
+  customHazards.push(val);
+  renderCustomTags('customHazardTags', customHazards, 'hazard');
+  input.value = '';
+}
+
+function renderCustomTags(containerId, arr, type) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = arr.map((item, i) => `
+    <div class="custom-tag">
+      ${item}
+      <button onclick="removeCustom('${type}', ${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function removeCustom(type, index) {
+  if (type === 'prop') {
+    customProps.splice(index, 1);
+    renderCustomTags('customTags', customProps, 'prop');
+  } else {
+    customHazards.splice(index, 1);
+    renderCustomTags('customHazardTags', customHazards, 'hazard');
+  }
+}
+
+// allow enter key
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('customPropInput').addEventListener('keydown', e => { if(e.key==='Enter') addCustomProp(); });
+  document.getElementById('customHazardInput').addEventListener('keydown', e => { if(e.key==='Enter') addCustomHazard(); });
+  init();
+});
+
+// ═══════════════════════════
+// GENERATE
+// ═══════════════════════════
+
+function generatePrompt() {
+  const track = document.getElementById('trackName').value || 'Custom Track';
+  const layout = document.getElementById('layout').value;
+  const artstyle = document.getElementById('artstyle').value;
+  const lighting = document.getElementById('lighting').value;
+  const ratio = document.getElementById('ratio').value;
+  const mjver = document.getElementById('mjver').value;
+  const quality = document.getElementById('quality').value;
+
+  const allProps = [...selectedProps, ...customProps];
+  const allHazards = [...selectedHazards, ...customHazards];
+
+  const propsStr = allProps.length ? allProps.join(', ') : 'various oversized obstacles';
+  const hazardsStr = allHazards.length ? allHazards.join(', ') : 'various track hazards';
+
+  const isGrid = layout.includes('4 panel');
+  let layoutDesc = '';
+
+  if (isGrid) {
+    layoutDesc = `4 panel grid screenshot collage of a tabletop racing game ${track.toLowerCase()} map, 2x2 layout, each panel showing different camera angles of the same map, panel 1 top left shows rear chase camera of miniature car drifting on the track surface, panel 2 top right shows side angle of cars racing between obstacles, panel 3 bottom left shows low ground level angle of car approaching a corner, panel 4 bottom right shows wide establishing shot of full track layout with multiple cars,`;
+  } else {
+    layoutDesc = `Tabletop racing game screenshot, ${layout}, miniature toy cars racing on ${track.toLowerCase()} themed track,`;
+  }
+
+  const prompt = `${layoutDesc} ${track} themed race track, track obstacles and barriers include ${propsStr}, track hazards include ${hazardsStr}, ${artstyle}, ${lighting}, game UI elements visible, seamless ${isGrid ? '2x2 grid' : 'single frame'} layout, ${ratio} ${mjver}${quality ? ' ' + quality : ''}`;
+
+  document.getElementById('promptText').textContent = prompt;
+  const output = document.getElementById('output');
+  output.classList.add('visible');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.textContent = '📋 Copy Prompt';
+  copyBtn.classList.remove('copied');
+}
+
+function copyPrompt() {
+  const text = document.getElementById('promptText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Prompt';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
